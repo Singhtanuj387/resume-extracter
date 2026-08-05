@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resume Extractor Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Outfit', sans-serif; }
+        /* Scrollbar styles */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #111827; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #374151; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #4B5563; 
+        }
+        .drag-active {
+            border-color: #10b981 !important;
+            background: rgba(16, 185, 129, 0.1) !important;
+        }
+        /* Dashboard base */
+        .dash-panel {
+            background-color: #1a202c; /* Tailwind gray-900 like */
+            border: 1px solid #2d3748;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+        .monitor-log {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.85rem;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body class="bg-[#0f141f] text-slate-300 min-h-screen flex flex-col items-center py-6 px-4">
+
+    <!-- Header -->
+    <header class="w-full max-w-7xl flex justify-between items-center mb-8 px-2">
+        <div class="flex items-center space-x-3">
+            <div class="bg-gradient-to-br from-indigo-400 to-purple-500 p-2 rounded-xl text-white shadow-lg">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+            </div>
+            <h1 class="text-2xl font-bold text-white tracking-wide">Resume Extractor <span class="font-normal text-slate-400">Dashboard</span></h1>
+        </div>
+        <div id="header-status" class="flex items-center space-x-2 px-4 py-1.5 bg-slate-800/80 border border-slate-700 rounded-full text-xs font-semibold text-slate-400 shadow-sm transition-colors">
+            <span class="w-2 h-2 rounded-full bg-slate-500" id="header-status-dot"></span>
+            <span id="header-status-text">IDLE</span>
+        </div>
+    </header>
+
+    <div class="w-full max-w-7xl grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- LEFT PANEL: UPLOAD & CONTROLS -->
+        <div class="lg:col-span-5 dash-panel p-6 flex flex-col h-full">
+            <h2 class="text-xs font-bold text-slate-400 tracking-widest uppercase mb-4 flex items-center">
+                <span class="mr-2 text-yellow-500">📁</span> Upload & Controls
+            </h2>
+
+            <div class="flex space-x-3 mb-4">
+                <button id="btn-browse" class="flex-1 bg-indigo-500 hover:bg-indigo-600 text-white py-2.5 rounded text-sm font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-opacity-50 shadow-md">
+                    Upload Resumes
+                </button>
+                <button id="btn-clear" class="flex-1 bg-slate-700 hover:bg-slate-600 text-white py-2.5 rounded text-sm font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-opacity-50 shadow-md disabled:opacity-50">
+                    Clear Selection
+                </button>
+            </div>
+
+            <!-- Drag & Drop Zone -->
+            <input type="file" id="file-input" multiple class="hidden" accept=".pdf,.doc,.docx,.png,.jpg,.jpeg">
+            <div id="drop-zone" class="flex-grow flex flex-col items-center justify-center border-2 border-dashed border-slate-700 bg-[#161b26] rounded-xl p-8 text-center transition-all duration-200 cursor-pointer hover:border-indigo-400 group min-h-[160px]">
+                <svg class="h-10 w-10 text-slate-500 group-hover:text-indigo-400 mb-3 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                </svg>
+                <div class="text-sm text-slate-400 group-hover:text-slate-300">
+                    Drag and drop files here
+                </div>
+            </div>
+
+            <div id="file-status" class="mt-4 px-4 py-2 bg-[#12161f] border border-emerald-900/30 rounded text-xs text-emerald-400 font-semibold flex items-center opacity-0 transition-opacity">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                <span id="file-status-text">0 files selected</span>
+            </div>
+
+            <div class="mt-5 flex space-x-3">
+                <button id="btn-start" class="flex-[2] bg-emerald-500 hover:bg-emerald-600 text-white py-3 rounded text-sm font-bold transition-colors focus:outline-none shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    Start Processing
+                </button>
+            </div>
+        </div>
+
+        <!-- RIGHT PANEL: PROGRESS & STATS -->
+        <div class="lg:col-span-7 dash-panel p-6 flex flex-col">
+            <h2 class="text-xs font-bold text-slate-400 tracking-widest uppercase mb-4 flex items-center">
+                <span class="mr-2 text-blue-400">📊</span> Progress
+            </h2>
+
+            <!-- Progress Bar -->
+            <div class="mb-8">
+                <div class="relative w-full h-3 bg-[#12161f] rounded-full overflow-hidden border border-slate-700/50 shadow-inner">
+                    <div id="progress-bar-fill" class="absolute top-0 left-0 h-full bg-emerald-500 transition-all duration-300 ease-out shadow-[0_0_10px_rgba(16,185,129,0.7)]" style="width: 0%"></div>
+                </div>
+            </div>
+
+            <!-- Stats Grid -->
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-auto mb-4">
+                <div class="bg-[#161b26] border border-slate-700/60 rounded-lg p-4 flex flex-col justify-center items-center shadow-sm">
+                    <div class="text-2xl font-bold text-white flex items-baseline space-x-1">
+                        <span id="stat-processed">0</span>
+                        <span class="text-sm text-slate-500 font-normal" id="stat-total">/ 0</span>
+                    </div>
+                    <div class="text-[0.65rem] font-bold text-slate-500 uppercase tracking-wider mt-1">Processed</div>
+                </div>
+
+                <div class="bg-[#161b26] border border-slate-700/60 rounded-lg p-4 flex flex-col justify-center items-center shadow-sm">
+                    <div class="text-2xl font-bold text-emerald-400" id="stat-active">0</div>
+                    <div class="text-[0.65rem] font-bold text-slate-500 uppercase tracking-wider mt-1">Active</div>
+                </div>
+
+                <div class="bg-[#161b26] border border-slate-700/60 rounded-lg p-4 flex flex-col justify-center items-center shadow-sm">
+                    <div class="text-2xl font-bold text-red-400" id="stat-failed">0</div>
+                    <div class="text-[0.65rem] font-bold text-slate-500 uppercase tracking-wider mt-1">Failed</div>
+                </div>
+                
+                <div class="bg-[#161b26] border border-slate-700/60 rounded-lg p-4 flex flex-col justify-center items-center shadow-sm cursor-pointer hover:bg-slate-700/30 transition-colors group" id="btn-download" title="Download Excel">
+                    <div class="text-2xl font-bold text-indigo-400 group-hover:scale-110 transition-transform">
+                        <svg class="w-7 h-7 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                    </div>
+                    <div class="text-[0.65rem] font-bold text-slate-500 uppercase tracking-wider mt-1 group-hover:text-indigo-300">Download</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- BOTTOM PANEL: LIVE MONITOR -->
+        <div class="lg:col-span-12 dash-panel p-6">
+            <h2 class="text-xs font-bold text-slate-400 tracking-widest uppercase mb-4 flex items-center">
+                <span class="mr-2 text-slate-300">📡</span> Live Monitor
+            </h2>
+            <div class="bg-[#090b10] border border-slate-800 rounded-lg p-4 h-64 overflow-y-auto shadow-inner relative">
+                <div id="monitor-console" class="monitor-log space-y-1">
+                    <div class="text-slate-600 italic">Waiting for batch upload...</div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        const btnBrowse = document.getElementById('btn-browse');
+        const fileInput = document.getElementById('file-input');
+        const dropZone = document.getElementById('drop-zone');
+        const btnClear = document.getElementById('btn-clear');
+        const btnStart = document.getElementById('btn-start');
+        const fileStatus = document.getElementById('file-status');
+        const fileStatusText = document.getElementById('file-status-text');
+
+        const headerStatusText = document.getElementById('header-status-text');
+        const headerStatusDot = document.getElementById('header-status-dot');
+        const headerStatusBadge = document.getElementById('header-status');
+
+        const progressBarFill = document.getElementById('progress-bar-fill');
+        const statProcessed = document.getElementById('stat-processed');
+        const statTotal = document.getElementById('stat-total');
+        const statActive = document.getElementById('stat-active');
+        const statFailed = document.getElementById('stat-failed');
+        const btnDownload = document.getElementById('btn-download');
+
+        const monitorConsole = document.getElementById('monitor-console');
+
+        let selectedFiles = [];
+        let pollingInterval = null;
+        let currentJobId = null;
+
+        // UI Helpers
+        function setHeaderStatus(statusText, colorClass, dotColorClass) {
+            headerStatusText.textContent = statusText;
+            headerStatusBadge.className = `flex items-center space-x-2 px-4 py-1.5 border rounded-full text-xs font-semibold shadow-sm transition-colors ${colorClass}`;
+            headerStatusDot.className = `w-2 h-2 rounded-full ${dotColorClass}`;
+        }
+
+        function appendLog(messageHtml) {
+            if (monitorConsole.innerHTML.includes('Waiting for batch upload...')) {
+                monitorConsole.innerHTML = '';
+            }
+            const div = document.createElement('div');
+            div.innerHTML = messageHtml;
+            monitorConsole.appendChild(div);
+            monitorConsole.scrollTop = monitorConsole.scrollHeight;
+        }
+        
+        function parseLogText(text) {
+            // Apply colors based on tags
+            if (text.includes('[SUCCESS]')) {
+                return `<span class="text-slate-400">${text.replace('[SUCCESS]', '<span class="text-emerald-400 float-right font-bold">[SUCCESS]</span>')}</span>`;
+            } else if (text.includes('[FAILED]')) {
+                return `<span class="text-red-400">${text.replace('[FAILED]', '<span class="text-red-500 float-right font-bold">[FAILED]</span>')}</span>`;
+            } else if (text.includes('[ACTIVE]')) {
+                return `<span class="text-indigo-300">${text.replace('[ACTIVE]', '<span class="text-indigo-400 float-right font-bold">[ACTIVE]</span>')}</span>`;
+            }
+            return `<span class="text-slate-400">${text}</span>`;
+        }
+
+        // File Selection Logic
+        btnBrowse.addEventListener('click', () => fileInput.click());
+        dropZone.addEventListener('click', () => fileInput.click());
+
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, e => { e.preventDefault(); e.stopPropagation(); }, false);
+        });
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropZone.addEventListener(eventName, () => dropZone.classList.add('drag-active'), false);
+        });
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, () => dropZone.classList.remove('drag-active'), false);
+        });
+
+        dropZone.addEventListener('drop', e => handleFiles({ target: { files: e.dataTransfer.files } }), false);
+        fileInput.addEventListener('change', handleFiles, false);
+
+        function handleFiles(e) {
+            if (!e.target.files || e.target.files.length === 0) return;
+            const newFiles = Array.from(e.target.files);
+            selectedFiles = [...selectedFiles, ...newFiles];
+            updateFileUI();
+            
+            if (e.target === fileInput) {
+                fileInput.value = '';
+            }
+        }
+
+        btnClear.addEventListener('click', () => {
+            selectedFiles = [];
+            updateFileUI();
+        });
+
+        function updateFileUI() {
+            if (selectedFiles.length > 0) {
+                fileStatus.classList.remove('opacity-0');
+                fileStatusText.textContent = `${selectedFiles.length} files selected`;
+                btnStart.disabled = false;
+                btnClear.disabled = false;
+            } else {
+                fileStatus.classList.add('opacity-0');
+                btnStart.disabled = true;
+                btnClear.disabled = true;
+            }
+        }
+        
+        // Initial State
+        btnStart.disabled = true;
+        btnClear.disabled = true;
+        btnDownload.disabled = true;
+        btnDownload.classList.add('opacity-50', 'cursor-not-allowed');
+
+        // Start Processing
+        btnStart.addEventListener('click', async () => {
+            if (selectedFiles.length === 0) return;
+
+            const formData = new FormData();
+            selectedFiles.forEach(file => {
+                formData.append('files', file);
+            });
+
+            // Reset UI
+            monitorConsole.innerHTML = '';
+            progressBarFill.style.width = '0%';
+            statProcessed.textContent = '0';
+            statTotal.textContent = `/ ${selectedFiles.length}`;
+            statActive.textContent = '0';
+            statFailed.textContent = '0';
+            currentJobId = null;
+            
+            setHeaderStatus('PROCESSING', 'bg-indigo-900/30 border-indigo-700/50 text-indigo-300', 'bg-indigo-500 animate-pulse');
+            btnStart.disabled = true;
+            btnClear.disabled = true;
+            btnDownload.disabled = true;
+            btnDownload.classList.add('opacity-50', 'cursor-not-allowed');
+
+            appendLog(parseLogText(`Uploading ${selectedFiles.length} files... [ACTIVE]`));
+
+            try {
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    currentJobId = data.job_id;
+                    appendLog(parseLogText(`Upload complete. Batch Job ID: ${currentJobId.substring(0,8)}... [SUCCESS]`));
+                    startPolling(currentJobId);
+                } else {
+                    throw new Error('Upload failed');
+                }
+            } catch (error) {
+                appendLog(parseLogText(`Connection error during upload. [FAILED]`));
+                setHeaderStatus('ERROR', 'bg-red-900/30 border-red-700/50 text-red-300', 'bg-red-500');
+                btnStart.disabled = false;
+                btnClear.disabled = false;
+            }
+        });
+
+        let lastLogIndex = 0;
+
+        function startPolling(jobId) {
+            lastLogIndex = 0;
+            if (pollingInterval) clearInterval(pollingInterval);
+            
+            pollingInterval = setInterval(async () => {
+                try {
+                    const res = await fetch(`/status/${jobId}`);
+                    if (res.ok) {
+                        const job = await res.json();
+                        updateProgressUI(job);
+                        
+                        if (job.status === 'completed') {
+                            clearInterval(pollingInterval);
+                            setHeaderStatus('COMPLETED', 'bg-purple-900/30 border-purple-700/50 text-purple-300', 'bg-purple-500');
+                            btnStart.disabled = false;
+                            btnClear.disabled = false;
+                            btnDownload.disabled = false;
+                            btnDownload.classList.remove('opacity-50', 'cursor-not-allowed');
+                            
+                        } else if (job.status === 'failed') {
+                            clearInterval(pollingInterval);
+                            setHeaderStatus('FAILED', 'bg-red-900/30 border-red-700/50 text-red-300', 'bg-red-500');
+                            btnStart.disabled = false;
+                            btnClear.disabled = false;
+                        }
+                    }
+                } catch (e) {
+                    console.error("Polling error", e);
+                }
+            }, 500);
+        }
+
+        function updateProgressUI(job) {
+            statProcessed.textContent = job.processed;
+            statTotal.textContent = `/ ${job.total}`;
+            statActive.textContent = job.active;
+            statFailed.textContent = job.failed;
+
+            if (job.total > 0) {
+                let pct = (job.processed / job.total) * 100;
+                if (pct > 100) pct = 100;
+                progressBarFill.style.width = `${pct}%`;
+            }
+
+            // Sync logs
+            if (job.logs && job.logs.length > lastLogIndex) {
+                for (let i = lastLogIndex; i < job.logs.length; i++) {
+                    appendLog(parseLogText(job.logs[i]));
+                }
+                lastLogIndex = job.logs.length;
+            }
+        }
+
+        btnDownload.addEventListener('click', () => {
+            if (currentJobId) {
+                window.location.href = `/download/${currentJobId}`;
+            } else {
+                alert("No completed job to download yet.");
+            }
+        });
+
+    </script>
+</body>
+</html>
