@@ -2,14 +2,41 @@ import os
 from datetime import datetime
 from sqlalchemy import create_engine, Column, Integer, String, Text, DateTime
 from sqlalchemy.orm import declarative_base, sessionmaker
+from sqlalchemy.engine import make_url
 
-# Database URL configuration
-# Uses PostgreSQL if DATABASE_URL is set (e.g. Render / Supabase / Neon), otherwise falls back to SQLite
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./resumes.db")
 
-# Fix for Render / Heroku postgres:// -> postgresql:// URL prefix
-if DATABASE_URL.startswith("postgres://"):
-    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+def get_clean_database_url():
+    """
+    Cleans and validates the DATABASE_URL environment variable.
+    Handles Render/Heroku postgres:// -> postgresql://, surrounding quotes, psql prefix,
+    and automatically falls back to SQLite if the variable is empty or invalid.
+    """
+    raw_url = os.getenv("DATABASE_URL")
+    if not raw_url:
+        return "sqlite:///./resumes.db"
+
+    url = raw_url.strip().strip("\"'").strip()
+    if not url:
+        return "sqlite:///./resumes.db"
+
+    # If copied with the CLI command e.g. "psql postgresql://..."
+    if url.startswith("psql "):
+        url = url[5:].strip().strip("\"'").strip()
+
+    # Fix legacy Render / Heroku prefix postgres:// -> postgresql://
+    if url.startswith("postgres://"):
+        url = url.replace("postgres://", "postgresql://", 1)
+
+    try:
+        make_url(url)
+        return url
+    except Exception as e:
+        print(f"Warning: Unable to parse DATABASE_URL '{raw_url}': {e}. Falling back to SQLite.")
+        return "sqlite:///./resumes.db"
+
+
+DATABASE_URL = get_clean_database_url()
+print(f"Connecting to database: {DATABASE_URL.split('@')[-1] if '@' in DATABASE_URL else DATABASE_URL}")
 
 connect_args = {}
 if DATABASE_URL.startswith("sqlite"):
