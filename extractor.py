@@ -417,6 +417,42 @@ def parse_resume(text):
         data["Experience & Internships"],
         data["Area of Interest / Objective"]
     )
+    # ── Post-process Education: keep only highest degree ───────────────
+    if data["Education"]:
+        edu_lines = data["Education"].split("\n")
+        filtered_edu = []
+        found_first_anchor = False
+        
+        year_re = re.compile(r'\b(19|20)\d{2}\b')
+        degree_kws = re.compile(r'\b(b\.?tech|m\.?tech|b\.?sc|m\.?sc|bachelor|master|class xii|class x|intermediate|matriculate|12th|10th)\b', re.IGNORECASE)
+        
+        for line in edu_lines:
+            stripped = line.strip()
+            if not stripped:
+                filtered_edu.append(line)
+                continue
+                
+            is_anchor = False
+            if year_re.search(stripped) or degree_kws.search(stripped):
+                if not re.search(r'\b(year\s*degree|degree/examination)\b', stripped, re.IGNORECASE):
+                    is_anchor = True
+                    
+            if is_anchor:
+                if found_first_anchor:
+                    # Pop dangling institution name if it belongs to the second degree
+                    if len(filtered_edu) > 0 and filtered_edu[-1].strip():
+                        prev = filtered_edu[-1].strip()
+                        if not year_re.search(prev) and not degree_kws.search(prev) and len(prev) < 80:
+                            filtered_edu.pop()
+                    break
+                found_first_anchor = True
+                
+            filtered_edu.append(line)
+            
+        while filtered_edu and not filtered_edu[-1].strip():
+            filtered_edu.pop()
+            
+        data["Education"] = "\n".join(filtered_edu)
 
     # ── Post-process Projects: keep only titles ────────────────────────
     if data["Projects"]:

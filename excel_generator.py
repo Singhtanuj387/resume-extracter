@@ -163,17 +163,17 @@ def _write_sheet(writer, df, sheet_name, workbook):
         'Name': 20,
         'Contact No': 15,
         'Email': 28,
+        'Role': 22,
+        'Skills': 45,
+        'Education': 45,
+        'Projects': 55,
+        'Experience & Internships': 50,
+        'Area of Interest / Objective': 35,
+        'Awards & Achievements': 40,
+        'Extra Curriculars & Leadership': 40,
+        'Registration No': 18,
         'LinkedIn': 25,
         'GitHub': 22,
-        'Registration No': 18,
-        'Role': 22,
-        'Area of Interest / Objective': 35,
-        'Education': 45,
-        'Experience & Internships': 50,
-        'Projects': 55,
-        'Awards & Achievements': 40,
-        'Skills': 45,
-        'Extra Curriculars & Leadership': 40,
         'Source File': 25,
     }
 
@@ -269,12 +269,11 @@ def generate_excel(parsed_resumes):
 
     # Ensure consistent column ordering
     column_order = [
-        'Name', 'Contact No', 'Email', 'LinkedIn', 'GitHub',
-        'Registration No', 'Role',
-        'Area of Interest / Objective', 'Education',
-        'Experience & Internships', 'Projects',
-        'Awards & Achievements', 'Skills',
-        'Extra Curriculars & Leadership', 'Source File'
+        'Name', 'Contact No', 'Email', 'Role', 'Skills',
+        'Education', 'Projects', 'Experience & Internships',
+        'Area of Interest / Objective', 'Awards & Achievements',
+        'Extra Curriculars & Leadership', 'Registration No',
+        'LinkedIn', 'GitHub', 'Source File'
     ]
 
     df_all = pd.DataFrame(parsed_resumes)
