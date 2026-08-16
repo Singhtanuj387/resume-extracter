@@ -9,3 +9,5 @@ pandas
 xlsxwriter
 pypdfium2
 gunicorn
+sqlalchemy
+psycopg2-binary
