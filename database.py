@@ -93,8 +93,15 @@ class Resume(Base):
 
 
 def init_db():
-    """Initializes database tables."""
-    Base.metadata.create_all(bind=engine)
+    """Initializes database tables safely across concurrent workers."""
+    try:
+        Base.metadata.create_all(bind=engine, checkfirst=True)
+    except Exception as e:
+        if "already exists" in str(e).lower():
+            pass
+        else:
+            print(f"Database init note: {e}")
+
 
 
 def get_db():
